@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net481;net10.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>eazdevirt</RootNamespace>
+    <AssemblyName>EazDevirt</AssemblyName>
+    <Nullable>disable</Nullable>
+    <NoWarn>$(NoWarn);CS0612;CS0618;CS0414;CS0168</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="dnlib" Version="4.5.0" />
+    <PackageReference Include="Lib.Harmony" Version="2.4.2" />
+  </ItemGroup>
+</Project>
