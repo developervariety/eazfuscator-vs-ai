@@ -92,6 +92,28 @@ inside the `<runtime>` element:
 <bypassTrustedAppStrongNames enabled="true" />
 ```
 
+### Step 5 — Invalidate the NGen native image cache
+
+.NET Framework pre-compiles Eazfuscator assemblies to native images stored in
+`C:\Windows\assembly\NativeImages_v4.0.30319_64\`. When a cached image exists,
+the CLR uses it and ignores any patched IL — so the About dialog will still show
+"This product is being evaluated." even after a correctly patched DLL is deployed.
+
+Run this in an **elevated PowerShell** after deploying to force the CLR to
+JIT-compile from the patched IL on next launch:
+
+```powershell
+& "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\ngen.exe" uninstall `
+    "C:\Program Files (x86)\Gapotchenko\Eazfuscator.NET\Components\Gapotchenko.Eazfuscator.NET.dll"
+```
+
+If you also patched the assistant executable (see below), run the same command for it:
+
+```powershell
+& "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\ngen.exe" uninstall `
+    "C:\Program Files (x86)\Gapotchenko\Eazfuscator.NET\eazfuscator.net-assistant.exe"
+```
+
 ### What the patches do
 
 | Token | Spec | Effect |
