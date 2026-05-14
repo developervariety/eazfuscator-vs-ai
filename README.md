@@ -39,25 +39,35 @@ Expected output (representative — heuristic count varies by build, all core pa
 
 ```
 [LicensePatcher] Running heuristic scan for license/eval patch targets...
+    heuristic 0x06006775 -> void                 (VM warning callback void(bool) → no-op)
     heuristic 0x06007BE0 -> true                 (license compute bool(Nullable<int>, bool) → true)
-    heuristic 0x0600941F -> bool-args-false       (eval state notifier (3 bool args packed) → all false)
-    heuristic 0x06009430 -> bool-args-false       (context builder (3 bool args packed) → all false)
-    heuristic 0x06008E09 -> true                  (license cache check (MemoryCache/ObjectCache) → true)
-    ... (additional heuristic detections) ...
-[LicensePatcher] Heuristic scan found N candidate(s).
+    heuristic 0x060083E3 -> void                 (VM warning callback void(bool) → no-op)
+    heuristic 0x06008697 -> int:7                (edition parser (codes {1,2,3,5},MaxValue) → 7)
+    heuristic 0x0600887A -> true                 (license cache check (MemoryCache/ObjectCache) → true)
+    heuristic 0x06008A01 -> int:7                (edition parser (codes {1,4,5,7},MaxValue) → 7)
+    heuristic 0x06008E09 -> true                 (license cache check (MemoryCache/ObjectCache) → true)
+    heuristic 0x0600941F -> bool-args-false      (eval state notifier (3 bool args packed) → all false)
+    heuristic 0x06009430 -> bool-args-false      (context builder (3 bool args packed) → all false)
+[LicensePatcher] Heuristic scan found 9 candidate(s).
 [LicensePatcher] Built-in table supplemented 9 additional entry/ies.
-  patched 0x06007BE0 -> true    (license compute bool(Nullable<int>, bool))
-  patched 0x0600941F -> bool-args-false  (eval state notifier)
-  patched 0x06009430 -> bool-args-false  (context builder)
-  patched 0x06008E0A -> true    (secondary license validator)
-  patched 0x06007BDE -> int:7   (edition int getter)
-  patched 0x06007BDF -> int:7   (edition int getter bool overload)
-  patched 0x06006BA1 -> int:7   (edition name parser)
-  patched 0x06006BAE -> true    (enterprise feature gate)
-  patched 0x06009418 -> void    (VM warning callback)
-  patched 0x06001CC2 -> void    (timer callback)
-  patched 0x06001CBF -> void    (timer starter)
-  patched 0x06001CC0 -> void    (timer starter)
+  patched 0x06006775 -> void                  (VM warning callback)
+  patched 0x06007BE0 -> true                  (license compute bool(Nullable<int>, bool))
+  patched 0x060083E3 -> void                  (VM warning callback)
+  patched 0x06008697 -> int:7                 (edition parser)
+  patched 0x0600887A -> true                  (license cache check)
+  patched 0x06008A01 -> int:7                 (edition parser)
+  patched 0x06008E09 -> true                  (license cache check)
+  patched 0x0600941F -> bool-args-false       (eval state notifier)
+  patched 0x06009430 -> bool-args-false       (context builder)
+  patched 0x06008E0A -> true                  (secondary license validator)
+  patched 0x06007BDE -> int:7                 (edition int getter)
+  patched 0x06007BDF -> int:7                 (edition int getter bool overload)
+  patched 0x06006BA1 -> int:7                 (edition name parser)
+  patched 0x06006BAE -> true                  (enterprise feature gate)
+  patched 0x06009418 -> void                  (VM warning callback)
+  patched 0x06001CC2 -> void                  (timer callback)
+  patched 0x06001CBF -> void                  (timer starter)
+  patched 0x06001CC0 -> void                  (timer starter)
 ```
 
 The patcher runs a structural heuristic scan first (version-independent) then supplements with the built-in 2026.1 token table for any entries the heuristic missed. On a new Eazfuscator build, supply `--eazfuscator-patch-table` for the new tokens.

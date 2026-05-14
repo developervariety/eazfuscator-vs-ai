@@ -36,7 +36,9 @@ namespace EazFixer
                 // poison the AppDomain before the VM map is captured.
                 ProcessorBase[] processors = Flags.TraceOnly
                     ? Array.Empty<ProcessorBase>()
-                    : new ProcessorBase[] {new Devirtualizer(), new StringFixer(), new ResourceResolver(), new Processors.AssemblyResolver()};
+                    : Flags.PatchEazfuscator
+                        ? Array.Empty<ProcessorBase>()  // self-patch: skip content processors, only LicensePatcher runs
+                        : new ProcessorBase[] {new Devirtualizer(), new StringFixer(), new ResourceResolver(), new Processors.AssemblyResolver()};
 
                 // Add LicensePatcher when requested
                 if (Flags.StripLicenseTelemetry || Flags.PatchEazfuscator || Flags.AnalyzeLicense)
