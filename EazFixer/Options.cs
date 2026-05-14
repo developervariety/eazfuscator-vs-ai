@@ -80,8 +80,9 @@ namespace EazFixer
         public IEnumerable<string> ProbeDependencyPaths { get; set; }
 
         [Option("vm-profile",
-            HelpText = "VM decoding profile. Use 'eaz2025-default' for current " +
-                       "behavior or 'custom' to run with custom-profile hooks.",
+            HelpText = "VM decoding profile. Use 'eaz2025-default' or " +
+                        "'eaz2026-default' for current behavior, or 'custom' " +
+                        "to run with custom-profile hooks.",
             Default = "eaz2025-default")]
         public string VmProfile { get; set; }
 
@@ -184,7 +185,32 @@ namespace EazFixer
 
         [Option("no-devirt-fold-loops",
             HelpText = "Disable loop folding during --devirt-rewrite and emit " +
-                       "fully linear traces instead.")]
+                        "fully linear traces instead.")]
         public bool NoDevirtFoldLoops { get; set; }
+
+        [Option("strip-license-telemetry",
+            HelpText = "Auto-detect and patch license validation, trial expiry, " +
+                        "CEIP/telemetry, and feature-gate methods. Scans for " +
+                        "strings, date comparisons, and known patterns.")]
+        public bool StripLicenseTelemetry { get; set; }
+
+        [Option("patch-eazfuscator",
+            HelpText = "Patch Eazfuscator.NET itself to bypass license checks. " +
+                        "Loads the main Gapotchenko.Eazfuscator.NET.dll, auto-scans " +
+                        "for license/telemetry methods, and rewrites them. " +
+                        "Also accepts --eazfuscator-patch-table for known tokens.")]
+        public bool PatchEazfuscator { get; set; }
+
+        [Option("eazfuscator-patch-table", Separator = ';',
+            HelpText = "Semicolon-separated list of method-token=value pairs " +
+                        "for --patch-eazfuscator mode. Example: " +
+                        "--eazfuscator-patch-table 0x06000001=true;0x06000002=int:0")]
+        public IEnumerable<string> EazfuscatorPatches { get; set; }
+
+        [Option("analyze-license",
+            HelpText = "Scan and report license/telemetry/trial-related methods " +
+                        "without patching them. Useful for discovering tokens " +
+                        "to use with --patch.")]
+        public bool AnalyzeLicense { get; set; }
     }
 }

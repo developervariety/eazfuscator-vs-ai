@@ -13,6 +13,8 @@ namespace eazdevirt
             {
                 case "custom":
                     return BuildCustom();
+                case "eaz2026-default":
+                case "eaz2025-default":
                 default:
                     return BuildDefault();
             }

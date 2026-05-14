@@ -22,6 +22,41 @@ namespace EazFixer
     /// </summary>
     internal static class ReturnPatcher
     {
+        // spec "bool-args-false": in-place surgery — replaces every ldarg that is immediately
+        // followed by "box System.Boolean" with ldc.i4.0, forcing all boxed-bool arguments false.
+        // Used for eval-state notifier and context-builder methods that pack bools into an object[].
+        private static void ApplyBoolArgsToFalse(MethodDef method)
+        {
+            if (!method.HasBody)
+                throw new Exception("method has no body");
+
+            var instrs = method.Body.Instructions;
+            int changes = 0;
+            for (int i = 0; i < instrs.Count - 1; i++)
+            {
+                var instr = instrs[i];
+                var next  = instrs[i + 1];
+
+                bool isArgLoad =
+                    instr.OpCode == OpCodes.Ldarg_0 || instr.OpCode == OpCodes.Ldarg_1 ||
+                    instr.OpCode == OpCodes.Ldarg_2 || instr.OpCode == OpCodes.Ldarg_3 ||
+                    instr.OpCode == OpCodes.Ldarg_S  || instr.OpCode == OpCodes.Ldarg;
+
+                bool isBoxedBool = next.OpCode == OpCodes.Box &&
+                    (next.Operand as ITypeDefOrRef)?.FullName == "System.Boolean";
+
+                if (isArgLoad && isBoxedBool)
+                {
+                    instr.OpCode  = OpCodes.Ldc_I4_0;
+                    instr.Operand = null;
+                    changes++;
+                }
+            }
+
+            if (changes == 0)
+                throw new Exception("no ldarg+box(System.Boolean) pairs found");
+        }
+
         public static void ApplyAll(ModuleDefMD module, IEnumerable<(uint Token, string ValueSpec)> specs)
         {
             foreach (var (token, spec) in specs)
@@ -39,9 +74,15 @@ namespace EazFixer
 
         public static void Apply(ModuleDefMD module, uint token, string spec)
         {
-            var rid = token & 0x00FFFFFF;
             if (module.ResolveToken(token) is not MethodDef method)
                 throw new Exception($"token 0x{token:X8} does not resolve to a method");
+
+            if (spec.Equals("bool-args-false", StringComparison.OrdinalIgnoreCase))
+            {
+                ApplyBoolArgsToFalse(method);
+                Console.WriteLine("  patched 0x{0:X8} -> bool-args-false  ({1})", token, SafeName(method));
+                return;
+            }
 
             var retType = method.ReturnType?.FullName ?? "System.Void";
             var body = new CilBody
@@ -84,7 +125,7 @@ namespace EazFixer
             // Strip any remaining local variables (body above declares none)
             // and exception handlers — not needed for a return-constant stub.
 
-            Console.WriteLine("  patched 0x{0:X8} -> {1}  ({2})", token, spec, SafeName(method));
+            Console.WriteLine("  patched 0x{0:X8} -> {1,-20}  ({2})", token, spec, SafeName(method));
         }
 
         private static void ApplyTyped(CilBody body, string retType, string spec)

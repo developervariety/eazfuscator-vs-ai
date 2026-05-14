@@ -6,11 +6,13 @@ namespace eazdevirt
     internal static class VmProfiles
     {
         public const string Eaz2025Default = "eaz2025-default";
+        public const string Eaz2026Default = "eaz2026-default";
         public const string Custom = "custom";
 
         private static readonly HashSet<string> Known = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             Eaz2025Default,
+            Eaz2026Default,
             Custom
         };
 

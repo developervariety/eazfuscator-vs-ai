@@ -8,7 +8,11 @@ namespace EazFixer
     {
         public static MethodDef FindStringDecryptMethod(ModuleDef module)
         {
-            return Utils.GetMethodsRecursive(module).SingleOrDefault(CanBeStringMethod);
+            // Eazfuscator may have multiple string decryptor methods (e.g. separate
+            // decryptors for different subsystems). Pick the first match rather than
+            // throwing on duplicates. If the first doesn't work, downstream callers
+            // can use --str-decrypt-tok to specify the correct one.
+            return Utils.GetMethodsRecursive(module).FirstOrDefault(CanBeStringMethod);
         }
 
         private static bool CanBeStringMethod(MethodDef method)

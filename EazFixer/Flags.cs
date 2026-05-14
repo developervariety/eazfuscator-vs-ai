@@ -55,5 +55,25 @@ namespace EazFixer {
         /// <summary>Optional per-token argument list. Keyed by the same token
         /// that's in TraceMethodTokens. Missing tokens trace with defaults.</summary>
         public static readonly Dictionary<uint, object[]> TraceMethodArgs = new();
+
+        /// <summary>
+        /// When set, auto-scans and patches license/telemetry methods.
+        /// </summary>
+        public static bool StripLicenseTelemetry;
+
+        /// <summary>
+        /// When set, runs Eazfuscator self-patching mode.
+        /// </summary>
+        public static bool PatchEazfuscator;
+
+        /// <summary>
+        /// Hardcoded patch table for --patch-eazfuscator mode.
+        /// </summary>
+        public static readonly List<(uint Token, string ValueSpec)> EazfuscatorPatches = new();
+
+        /// <summary>
+        /// When set, only reports license candidates without patching.
+        /// </summary>
+        public static bool AnalyzeLicense;
     }
 }

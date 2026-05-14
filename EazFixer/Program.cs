@@ -37,6 +37,15 @@ namespace EazFixer
                 ProcessorBase[] processors = Flags.TraceOnly
                     ? Array.Empty<ProcessorBase>()
                     : new ProcessorBase[] {new Devirtualizer(), new StringFixer(), new ResourceResolver(), new Processors.AssemblyResolver()};
+
+                // Add LicensePatcher when requested
+                if (Flags.StripLicenseTelemetry || Flags.PatchEazfuscator || Flags.AnalyzeLicense)
+                {
+                    var oldList = processors;
+                    processors = new ProcessorBase[oldList.Length + 1];
+                    Array.Copy(oldList, processors, oldList.Length);
+                    processors[oldList.Length] = new Processors.LicensePatcher();
+                }
                 var ctx = new EazContext(!string.IsNullOrEmpty(Flags.InFile) ? Flags.InFile : throw new Exception("Filepath not defined!"),
                     processors);
 
@@ -251,13 +260,29 @@ namespace EazFixer
                 }
 
                 Console.WriteLine("Writing new assembly...");
-                var mdFlags = Flags.PreserveAll ? MetadataFlags.PreserveAll : 0;
+                // When patching Eazfuscator itself we must preserve all metadata RIDs so
+                // the token-addressed patches land at the same addresses in the output file.
+                var mdFlags = (Flags.PreserveAll || Flags.PatchEazfuscator) ? MetadataFlags.PreserveAll : 0;
                 // KeepOldMaxStack: if cflow deob or devirt patched bodies, dnlib
                 // can't always recompute max stack. Keep the original value
                 // (potentially oversized) to avoid hard-failing the write.
-                if (Flags.DeobCflow || Flags.DevirtRewrite || !Flags.NoDevirt || Flags.PatchSpecs.Count > 0)
+                if (Flags.DeobCflow || Flags.DevirtRewrite || !Flags.NoDevirt || Flags.PatchSpecs.Count > 0 || Flags.PatchEazfuscator)
                     mdFlags |= MetadataFlags.KeepOldMaxStack;
-                ctx.Module.Write(Flags.OutFile, new ModuleWriterOptions(ctx.Module) { MetadataOptions = new MetadataOptions(mdFlags) });
+
+                var writerOpts = new ModuleWriterOptions(ctx.Module) { MetadataOptions = new MetadataOptions(mdFlags) };
+
+                // When patching Eazfuscator itself, just preserve the public key
+                // identity. The strong name signature becomes invalid after IL
+                // changes, so the user must also apply the config-based bypass
+                // (<bypassTrustedAppStrongNames/> in eazfuscator.net.exe.config).
+                if (Flags.PatchEazfuscator)
+                {
+                    Console.WriteLine("  preserving public key identity for patched output...");
+                    Console.WriteLine("  NOTE: Add <bypassTrustedAppStrongNames enabled=\"true\" /> to");
+                    Console.WriteLine("        eazfuscator.net.exe.config to skip signature verification.");
+                }
+
+                ctx.Module.Write(Flags.OutFile, writerOpts);
 
 #if DEBUG
                 return Exit("DONE", true);
@@ -429,6 +454,28 @@ namespace EazFixer
                     Flags.PatchSpecs.Add((tok, spec));
                 }
             }
+
+            if (args.EazfuscatorPatches != null)
+            {
+                foreach (var raw in args.EazfuscatorPatches)
+                {
+                    if (string.IsNullOrWhiteSpace(raw)) continue;
+                    var eq = raw.IndexOf('=');
+                    if (eq < 0)
+                        throw new FormatException($"--eazfuscator-patch-table '{raw}': expected '<token>=<value-spec>'");
+                    var tokStr = raw.Substring(0, eq).Trim();
+                    var spec = raw.Substring(eq + 1).Trim();
+                    uint tok;
+                    if (tokStr.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+                        tok = Convert.ToUInt32(tokStr.Substring(2), 16);
+                    else
+                        tok = Convert.ToUInt32(tokStr, 16);
+                    Flags.EazfuscatorPatches.Add((tok, spec));
+                }
+            }
+            Flags.StripLicenseTelemetry = args.StripLicenseTelemetry;
+            Flags.PatchEazfuscator = args.PatchEazfuscator;
+            Flags.AnalyzeLicense = args.AnalyzeLicense;
 
             if (args.OutFile != default)
             {
